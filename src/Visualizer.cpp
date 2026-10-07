@@ -21,6 +21,8 @@ void Visualizer::run(int argc, char *argv[]) {
               << "> mapf-visualizer assets/random-32-32-20.map "
                  "assets/demo_random-32-32-20.txt"
               << std::endl;
+
+    return;
   }
 
   // load graph
