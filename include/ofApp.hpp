@@ -60,5 +60,6 @@ public:
   void dragEvent(ofDragInfo dragInfo);
   void gotMessage(ofMessage msg);
 
-  ofApp(Graph* _G, Solution* _P, bool flg_capture_only = false);
+  ofApp(Graph* _G, Solution* _P, const Config& _goals,
+        bool flg_capture_only = false);
 };

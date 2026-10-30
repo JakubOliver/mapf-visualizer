@@ -33,12 +33,13 @@ static void printKeys()
   std::cout << "- esc : terminate" << std::endl;
 }
 
-ofApp::ofApp(Graph* _G, Solution* _P, bool _flg_capture_only)
+ofApp::ofApp(Graph* _G, Solution* _P, const Config& _goals,
+             bool _flg_capture_only)
     : G(_G),
       P(_P),
       N(P->front().size()),
       T(P->size() - 1),
-      goals(P->back()),
+      goals(_goals),
       scale(get_scale(G)),
       agent_rad(scale / std::sqrt(2) / 2),
       goal_rad(scale / 4.0),

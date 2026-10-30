@@ -14,6 +14,32 @@
 const std::regex r_pos =
     std::regex(R"(\((\d+),(\d+),?([XY]{1}_[A-Z]{4,5})?\),)");
 
+static Config parseConfig(const std::string& line, Graph& graph) {
+  Config config;
+  std::smatch match;
+  auto iter = line.cbegin();
+
+  while (iter < line.cend()) {
+    auto search_end = std::min(iter + 128, line.cend());
+
+    if (!std::regex_search(iter, search_end, match, r_pos)) break;
+
+    auto x = std::stoi(match[1].str());
+    auto y = std::stoi(match[2].str());
+    Orientation orientation = Orientation::NONE;
+
+    if (match[3].matched) {
+      orientation = Orientation::from_string(match[3].str());
+    }
+
+    config.push_back(
+        Pose(graph.U[graph.width * y + x], orientation));
+    iter += match.position() + match.length();
+  }
+
+  return config;
+}
+
 void Visualizer::run(int argc, char *argv[]) {
   // simple arguments check
   if (argc < 3 || !std::ifstream(argv[1]) || !std::ifstream(argv[2])) {
@@ -31,35 +57,25 @@ void Visualizer::run(int argc, char *argv[]) {
   // load plan
   auto solution_file = std::ifstream(argv[2]);
   Solution solution;
+  Config goals;
   std::string line;
-  std::smatch m, results;
   while (getline(solution_file, line)) {
+    if (line.starts_with("goals=")) {
+      goals = parseConfig(line, G);
+      continue;
+    }
+
     // so we only process real solution lines
     if (line.find(":(") == std::string::npos) continue;
 
-    auto iter = line.cbegin();
-    Config c;
-    while (iter < line.cend()) {
-      auto search_end = std::min(iter + 128, line.cend());
-      if (std::regex_search(iter, search_end, m, r_pos)) {
-        auto x = std::stoi(m[1].str());
-        auto y = std::stoi(m[2].str());
-        Orientation o = Orientation::NONE;
-        if (m[3].matched) {
-          o = Orientation::from_string(m[3].str());
-        }
-        c.push_back(Pose(G.U[G.width * y + x], o));
-        iter += m[0].length();
-      } else {
-        break;
-      }
-    }
-    solution.push_back(c);
+    solution.push_back(parseConfig(line, G));
   }
   solution_file.close();
 
+  if (goals.empty()) goals = solution.back();
+
   // visualize
   ofSetupOpenGL(100, 100, OF_WINDOW);
-  ofRunApp(new ofApp(&G, &solution,
+  ofRunApp(new ofApp(&G, &solution, goals,
                      (argc > 3 && std::string(argv[3]) == "--capture-only")));
 }
